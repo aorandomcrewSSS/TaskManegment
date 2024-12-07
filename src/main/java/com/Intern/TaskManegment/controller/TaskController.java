@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.nio.file.AccessDeniedException;
@@ -26,13 +27,13 @@ public class TaskController {
 
     // Создание задачи
     @PostMapping
-    public ResponseEntity<TaskResponse> createTask(
-            @RequestBody TaskCreateRequest taskCreateRequest,
-            @RequestParam Long authorId) {
+    public ResponseEntity<TaskResponse> createTask(@RequestBody TaskCreateRequest taskCreateRequest) {
+        // Извлекаем текущего пользователя из SecurityContext
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User author = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
-        User author = userRepository.findById(authorId)
-                .orElseThrow(() -> new EntityNotFoundException("Author not found"));
-
+        // Передаем автора напрямую в TaskService
         TaskResponse taskResponse = taskService.createTask(taskCreateRequest, author);
         return ResponseEntity.status(HttpStatus.CREATED).body(taskResponse);
     }
@@ -41,10 +42,10 @@ public class TaskController {
     @PutMapping("/{taskId}")
     public ResponseEntity<TaskResponse> updateTask(
             @PathVariable Long taskId,
-            @RequestBody TaskUpdateRequest taskUpdateRequest,
-            @RequestParam Long userId) throws AccessDeniedException {
-
-        User user = userRepository.findById(userId)
+            @RequestBody TaskUpdateRequest taskUpdateRequest) throws AccessDeniedException {
+        // Извлекаем текущего пользователя из SecurityContext
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
         TaskResponse taskResponse = taskService.updateTask(taskId, taskUpdateRequest, user);
@@ -59,32 +60,23 @@ public class TaskController {
     }
 
     // Получение задач по автору с пагинацией
-    @GetMapping("/author/{authorId}")
-    public ResponseEntity<Page<TaskResponse>> getTasksByAuthor(
-            @PathVariable Long authorId,
-            Pageable pageable) {
+    @GetMapping("/my-tasks")
+    public ResponseEntity<Page<TaskResponse>> getMyTasks(Pageable pageable) {
+        // Извлекаем текущего пользователя из SecurityContext
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User author = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
-        Page<TaskResponse> tasks = taskService.getTasksByAuthor(authorId, pageable);
-        return ResponseEntity.ok(tasks);
-    }
-
-    // Получение задач по исполнителю с пагинацией
-    @GetMapping("/executor/{executorId}")
-    public ResponseEntity<Page<TaskResponse>> getTasksByExecutor(
-            @PathVariable Long executorId,
-            Pageable pageable) {
-
-        Page<TaskResponse> tasks = taskService.getTasksByExecutor(executorId, pageable);
+        Page<TaskResponse> tasks = taskService.getTasksByAuthor(author.getId(), pageable);
         return ResponseEntity.ok(tasks);
     }
 
     // Удаление задачи
     @DeleteMapping("/{taskId}")
-    public ResponseEntity<Void> deleteTask(
-            @PathVariable Long taskId,
-            @RequestParam Long userId) throws AccessDeniedException {
-
-        User user = userRepository.findById(userId)
+    public ResponseEntity<Void> deleteTask(@PathVariable Long taskId) throws AccessDeniedException {
+        // Извлекаем текущего пользователя из SecurityContext
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
         taskService.deleteTask(taskId, user);

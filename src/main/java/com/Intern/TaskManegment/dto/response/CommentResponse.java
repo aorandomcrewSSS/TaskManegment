@@ -1,14 +1,13 @@
 package com.Intern.TaskManegment.dto.response;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+
 @Data
-@Builder
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor // Добавляем конструктор без аргументов
 public class CommentResponse {
     private Long id;
     private String text;

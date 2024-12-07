@@ -8,8 +8,6 @@ import com.Intern.TaskManegment.model.Task;
 import com.Intern.TaskManegment.model.User;
 import com.Intern.TaskManegment.model.enums.Priority;
 import com.Intern.TaskManegment.model.enums.Status;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -23,9 +21,13 @@ public class TaskMapper {
         Task task = new Task();
         task.setTitle(taskCreateRequest.getTitle());
         task.setDescription(taskCreateRequest.getDescription());
-        task.setStatus(Status.valueOf(taskCreateRequest.getStatus()));  // Преобразуем строку в Enum
-        task.setPriority(Priority.valueOf(taskCreateRequest.getPriority()));  // Преобразуем строку в Enum
-        task.setAuthor(author);
+        task.setStatus(taskCreateRequest.getStatus() != null
+                ? Status.valueOf(taskCreateRequest.getStatus())
+                : Status.PENDING);
+        task.setPriority(taskCreateRequest.getPriority() != null
+                ? Priority.valueOf(taskCreateRequest.getPriority())
+                : Priority.HIGH);  // Преобразуем строку в Enum
+        task.setAuthor(author);  // Автор задачи задается из текущего пользователя
         task.setExecutor(executor);
         task.setComments(new ArrayList<>());  // Игнорируем комментарии
         return task;

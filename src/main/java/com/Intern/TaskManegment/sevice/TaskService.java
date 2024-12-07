@@ -1,6 +1,5 @@
 package com.Intern.TaskManegment.sevice;
 
-import com.Intern.TaskManegment.dto.mapper.CommentMapper;
 import com.Intern.TaskManegment.dto.mapper.TaskMapper;
 import com.Intern.TaskManegment.dto.request.TaskCreateRequest;
 import com.Intern.TaskManegment.dto.request.TaskUpdateRequest;
@@ -28,16 +27,16 @@ public class TaskService {
 
     // Создание задачи
     public TaskResponse createTask(TaskCreateRequest taskCreateRequest, User author) {
-        // Находим исполнителя по ID из запроса
-        User executor = userRepository.findById(taskCreateRequest.getExecutorId())
-                .orElseThrow(() -> new EntityNotFoundException("Executor not found"));
+        User executor = null;
+        if (taskCreateRequest.getExecutorId() != null) {
+            executor = userRepository.findById(taskCreateRequest.getExecutorId())
+                    .orElseThrow(() -> new EntityNotFoundException("Executor not found"));
+        }
 
-        // Маппим данные из DTO в сущность Task
         Task task = taskMapper.taskCreateRequestToTask(taskCreateRequest, author, executor);
+        taskRepository.save(task);
 
-        // Сохраняем задачу
-        Task savedTask = taskRepository.save(task);
-        return taskMapper.taskToTaskResponse(savedTask);  // Возвращаем TaskResponse
+        return taskMapper.taskToTaskResponse(task);
     }
 
     // Обновление задачи

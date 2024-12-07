@@ -1,6 +1,5 @@
 package com.Intern.TaskManegment.sevice;
 
-import com.Intern.TaskManegment.dto.mapper.CommentMapper;
 import com.Intern.TaskManegment.dto.request.CommentCreateRequest;
 import com.Intern.TaskManegment.dto.response.CommentResponse;
 import com.Intern.TaskManegment.model.Comment;
@@ -8,7 +7,6 @@ import com.Intern.TaskManegment.model.Task;
 import com.Intern.TaskManegment.model.User;
 import com.Intern.TaskManegment.repository.CommentRepository;
 import com.Intern.TaskManegment.repository.TaskRepository;
-import com.Intern.TaskManegment.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,47 +21,46 @@ public class CommentService {
 
     private final CommentRepository commentRepository;
     private final TaskRepository taskRepository;
-    private final UserRepository userRepository;
-    private final CommentMapper commentMapper;
 
-    // Добавление комментария к задаче
-    public CommentResponse addComment(Long taskId, Long userId, CommentCreateRequest commentCreateRequest) {
-        // Находим задачу и пользователя
+    public CommentResponse addComment(Long taskId, User author, CommentCreateRequest commentCreateRequest) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new EntityNotFoundException("Task not found"));
-        User author = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
-        // Маппим данные из DTO в сущность
-        Comment comment = commentMapper.commentCreateRequestToComment(commentCreateRequest, task, author);
+        Comment comment = new Comment();
+        comment.setTask(task);
+        comment.setAuthor(author);
+        comment.setText(commentCreateRequest.getText());
+        commentRepository.save(comment);
 
-        // Сохраняем комментарий
-        Comment savedComment = commentRepository.save(comment);
-        return commentMapper.commentToCommentResponse(savedComment);
+        return new CommentResponse(
+                comment.getId(),
+                comment.getText(),
+                author.getId(),
+                task.getId()
+        );
     }
 
-    // Получение комментариев по задаче
-    public List<CommentResponse> getCommentsByTask(Long taskId) {
-        // Получаем все комментарии для задачи
-        List<Comment> comments = commentRepository.findByTaskId(taskId);
-        return comments.stream()
-                .map(commentMapper::commentToCommentResponse)
-                .collect(Collectors.toList());
-    }
-
-    // Удаление комментария
-    public void deleteComment(Long commentId, Long userId) throws AccessDeniedException {
+    public void deleteComment(Long commentId, User author) throws AccessDeniedException {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new EntityNotFoundException("Comment not found"));
-        User author = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
-        // Проверяем, что пользователь может удалить комментарий (например, если это автор комментария)
         if (!comment.getAuthor().equals(author)) {
-            throw new AccessDeniedException("You do not have permission to delete this comment");
+            throw new AccessDeniedException("You are not allowed to delete this comment");
         }
 
-        // Удаляем комментарий
         commentRepository.delete(comment);
+    }
+
+    public List<CommentResponse> getCommentsByTask(Long taskId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new EntityNotFoundException("Task not found"));
+
+        return task.getComments().stream()
+                .map(comment -> new CommentResponse(
+                        comment.getId(),
+                        comment.getText(),
+                        comment.getAuthor().getId(),
+                        taskId))
+                .collect(Collectors.toList());
     }
 }
