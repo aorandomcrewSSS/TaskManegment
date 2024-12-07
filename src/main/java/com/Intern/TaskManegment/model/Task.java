@@ -23,7 +23,6 @@ public class Task {
     private Long id;
 
     private String title;
-
     private String description;
 
     @Enumerated(EnumType.STRING)
@@ -40,6 +39,7 @@ public class Task {
     @JoinColumn(name = "executor_id")
     private User executor;
 
-    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL)
+    @Builder.Default
     private List<Comment> comments = new ArrayList<>();
 }
