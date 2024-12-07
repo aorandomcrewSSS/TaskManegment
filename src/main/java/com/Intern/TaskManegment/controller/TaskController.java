@@ -1,11 +1,6 @@
 package com.Intern.TaskManegment.controller;
 
-import com.Intern.TaskManegment.dto.TaskRequest;
-import com.Intern.TaskManegment.model.Comment;
 import com.Intern.TaskManegment.model.Task;
-import com.Intern.TaskManegment.model.User;
-import com.Intern.TaskManegment.model.enums.Status;
-import com.Intern.TaskManegment.sevice.CommentService;
 import com.Intern.TaskManegment.sevice.TaskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -16,7 +11,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.nio.file.AccessDeniedException;
-import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/v1/tasks")
