@@ -65,5 +65,4 @@ public class JwtService {
                 .decode(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
         return new SecretKeySpec(bytes, "HmacSHA256");
     }
-
 }
