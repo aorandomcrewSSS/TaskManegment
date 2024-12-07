@@ -1,17 +1,18 @@
 package com.Intern.TaskManegment.sevice;
 
-import com.Intern.TaskManegment.model.Comment;
+import com.Intern.TaskManegment.dto.mapper.TaskMapper;
+import com.Intern.TaskManegment.dto.request.TaskCreateRequest;
+import com.Intern.TaskManegment.dto.request.TaskUpdateRequest;
+import com.Intern.TaskManegment.dto.response.TaskResponse;
 import com.Intern.TaskManegment.model.Task;
 import com.Intern.TaskManegment.model.User;
-import com.Intern.TaskManegment.model.enums.Status;
-import com.Intern.TaskManegment.repository.CommentRepository;
+import com.Intern.TaskManegment.model.enums.Role;
 import com.Intern.TaskManegment.repository.TaskRepository;
 import com.Intern.TaskManegment.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.AccessDeniedException;
@@ -19,58 +20,77 @@ import java.nio.file.AccessDeniedException;
 @Service
 @RequiredArgsConstructor
 public class TaskService {
+
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
+    private final TaskMapper taskMapper;
 
-    public Task createTask(Task task, String authorEmail) {
-        User author = userRepository.findByEmail(authorEmail)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        task.setAuthor(author);
-        task.setStatus(Status.PENDING);
-        return taskRepository.save(task);
-    }
-
-    public Task updateTask(Long taskId, Task updatedTask, String userEmail, boolean isAdmin) throws AccessDeniedException {
-        Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new EntityNotFoundException("Task not found"));
-
-        if (!isAdmin && !task.getAuthor().getEmail().equals(userEmail)) {
-            throw new AccessDeniedException("Unauthorized to edit this task");
-        }
-
-        task.setTitle(updatedTask.getTitle());
-        task.setDescription(updatedTask.getDescription());
-        task.setPriority(updatedTask.getPriority());
-        task.setStatus(updatedTask.getStatus());
-        if (updatedTask.getExecutor() != null) {
-            User executor = userRepository.findById(updatedTask.getExecutor().getId())
+    // Создание задачи
+    public TaskResponse createTask(TaskCreateRequest taskCreateRequest, User author) {
+        User executor = null;
+        if (taskCreateRequest.getExecutorId() != null) {
+            executor = userRepository.findById(taskCreateRequest.getExecutorId())
                     .orElseThrow(() -> new EntityNotFoundException("Executor not found"));
-            task.setExecutor(executor);
         }
 
-        return taskRepository.save(task);
+        Task task = taskMapper.taskCreateRequestToTask(taskCreateRequest, author, executor);
+        taskRepository.save(task);
+
+        return taskMapper.taskToTaskResponse(task);
     }
 
-    public void deleteTask(Long taskId, String userEmail, boolean isAdmin) throws AccessDeniedException {
+    // Обновление задачи
+    public TaskResponse updateTask(Long taskId, TaskUpdateRequest taskUpdateRequest, User user) throws AccessDeniedException {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new EntityNotFoundException("Task not found"));
 
-        if (!isAdmin && !task.getAuthor().getEmail().equals(userEmail)) {
-            throw new AccessDeniedException("Unauthorized to delete this task");
+        // Логика проверки доступа
+        if (!task.getAuthor().equals(user) && user.getRole() != Role.ADMIN) {
+            throw new AccessDeniedException("You do not have permission to update this task");
         }
 
-        taskRepository.delete(task);
+        // Находим исполнителя, если он указан в обновлении
+        User executor = userRepository.findById(taskUpdateRequest.getExecutorId())
+                .orElseThrow(() -> new EntityNotFoundException("Executor not found"));
+
+        // Маппим обновленные данные из DTO
+        task = taskMapper.taskUpdateRequestToTask(taskUpdateRequest, task, executor);
+
+        // Сохраняем обновленную задачу
+        Task updatedTask = taskRepository.save(task);
+        return taskMapper.taskToTaskResponse(updatedTask);  // Возвращаем TaskResponse
     }
 
-    public Page<Task> getTasksByAuthor(String authorEmail, Pageable pageable) {
-        User author = userRepository.findByEmail(authorEmail)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        return taskRepository.findByAuthor(author, pageable);
+    // Получение задачи по ID
+    public TaskResponse getTaskById(Long taskId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new EntityNotFoundException("Task not found"));
+
+        return taskMapper.taskToTaskResponse(task); // Возвращаем TaskResponse
     }
 
-    public Page<Task> getTasksByExecutor(String executorEmail, Pageable pageable) {
-        User executor = userRepository.findByEmail(executorEmail)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        return taskRepository.findByExecutor(executor, pageable);
+    // Получение всех задач автора с пагинацией
+    public Page<TaskResponse> getTasksByAuthor(Long authorId, Pageable pageable) {
+        Page<Task> tasks = taskRepository.findByAuthorId(authorId, pageable);
+        return tasks.map(taskMapper::taskToTaskResponse);
+    }
+
+    // Получение всех задач исполнителя с пагинацией
+    public Page<TaskResponse> getTasksByExecutor(Long executorId, Pageable pageable) {
+        Page<Task> tasks = taskRepository.findByExecutorId(executorId, pageable);
+        return tasks.map(taskMapper::taskToTaskResponse);
+    }
+
+    // Удаление задачи
+    public void deleteTask(Long taskId, User user) throws AccessDeniedException {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new EntityNotFoundException("Task not found"));
+
+        // Проверяем, что пользователь может удалять задачу
+        if (!task.getAuthor().equals(user) && user.getRole() != Role.ADMIN) {
+            throw new AccessDeniedException("You do not have permission to delete this task");
+        }
+
+        taskRepository.delete(task); // Удаляем задачу
     }
 }

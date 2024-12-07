@@ -1,13 +1,18 @@
 package com.Intern.TaskManegment.controller;
 
-import com.Intern.TaskManegment.model.Task;
+import com.Intern.TaskManegment.dto.request.TaskCreateRequest;
+import com.Intern.TaskManegment.dto.request.TaskUpdateRequest;
+import com.Intern.TaskManegment.dto.response.TaskResponse;
+import com.Intern.TaskManegment.model.User;
+import com.Intern.TaskManegment.repository.UserRepository;
 import com.Intern.TaskManegment.sevice.TaskService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.nio.file.AccessDeniedException;
@@ -16,42 +21,65 @@ import java.nio.file.AccessDeniedException;
 @RequestMapping("/api/v1/tasks")
 @RequiredArgsConstructor
 public class TaskController {
+
     private final TaskService taskService;
+    private final UserRepository userRepository;
 
+    // Создание задачи
     @PostMapping
-    public ResponseEntity<Task> createTask(@RequestBody Task task, Authentication authentication) {
-        return ResponseEntity.ok(taskService.createTask(task, authentication.getName()));
+    public ResponseEntity<TaskResponse> createTask(@RequestBody TaskCreateRequest taskCreateRequest) {
+        // Извлекаем текущего пользователя из SecurityContext
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User author = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        // Передаем автора напрямую в TaskService
+        TaskResponse taskResponse = taskService.createTask(taskCreateRequest, author);
+        return ResponseEntity.status(HttpStatus.CREATED).body(taskResponse);
     }
 
+    // Обновление задачи
     @PutMapping("/{taskId}")
-    public ResponseEntity<Task> updateTask(
+    public ResponseEntity<TaskResponse> updateTask(
             @PathVariable Long taskId,
-            @RequestBody Task updatedTask,
-            Authentication authentication) throws AccessDeniedException {
-        boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
-        return ResponseEntity.ok(taskService.updateTask(taskId, updatedTask, authentication.getName(), isAdmin));
+            @RequestBody TaskUpdateRequest taskUpdateRequest) throws AccessDeniedException {
+        // Извлекаем текущего пользователя из SecurityContext
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        TaskResponse taskResponse = taskService.updateTask(taskId, taskUpdateRequest, user);
+        return ResponseEntity.ok(taskResponse);
     }
 
+    // Получение задачи по ID
+    @GetMapping("/{taskId}")
+    public ResponseEntity<TaskResponse> getTaskById(@PathVariable Long taskId) {
+        TaskResponse taskResponse = taskService.getTaskById(taskId);
+        return ResponseEntity.ok(taskResponse);
+    }
+
+    // Получение задач по автору с пагинацией
+    @GetMapping("/my-tasks")
+    public ResponseEntity<Page<TaskResponse>> getMyTasks(Pageable pageable) {
+        // Извлекаем текущего пользователя из SecurityContext
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User author = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        Page<TaskResponse> tasks = taskService.getTasksByAuthor(author.getId(), pageable);
+        return ResponseEntity.ok(tasks);
+    }
+
+    // Удаление задачи
     @DeleteMapping("/{taskId}")
-    public ResponseEntity<Void> deleteTask(@PathVariable Long taskId, Authentication authentication) throws AccessDeniedException {
-        boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
-        taskService.deleteTask(taskId, authentication.getName(), isAdmin);
+    public ResponseEntity<Void> deleteTask(@PathVariable Long taskId) throws AccessDeniedException {
+        // Извлекаем текущего пользователя из SecurityContext
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        taskService.deleteTask(taskId, user);
         return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/author/{authorEmail}")
-    public ResponseEntity<Page<Task>> getTasksByAuthor(
-            @PathVariable String authorEmail,
-            @PageableDefault(size = 10) Pageable pageable) {
-        return ResponseEntity.ok(taskService.getTasksByAuthor(authorEmail, pageable));
-    }
-
-    @GetMapping("/executor/{executorEmail}")
-    public ResponseEntity<Page<Task>> getTasksByExecutor(
-            @PathVariable String executorEmail,
-            @PageableDefault(size = 10) Pageable pageable) {
-        return ResponseEntity.ok(taskService.getTasksByExecutor(executorEmail, pageable));
     }
 }

@@ -1,7 +1,6 @@
 package com.Intern.TaskManegment.model;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,15 +19,13 @@ public class Comment {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    private String content;
-
-    @ManyToOne
-    @JoinColumn(name = "author_id", nullable = false)
-    private User author;
-
-    @ManyToOne
-    @JoinColumn(name = "task_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "task_id")
     private Task task;
 
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_id")
+    private User author;
+
+    private String text;
 }
