@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TaskUpdateRequest {
-    private String status; // можно использовать enum
-    private String priority; // можно использовать enum
+    private String status; 
+    private String priority; 
     private Long executorId;
 }
