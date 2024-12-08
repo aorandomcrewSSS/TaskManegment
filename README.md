@@ -9,6 +9,7 @@ Task Management System
 - Java 17
 - Spring Boot
 - Spring Data JPA
+- Spring Security + jwt
 - PosstgreSQL
 - Swagger/OpenAPI
 - Docker Compose
