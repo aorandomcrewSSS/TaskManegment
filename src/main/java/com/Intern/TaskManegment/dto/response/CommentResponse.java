@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
-@NoArgsConstructor // Добавляем конструктор без аргументов
+@NoArgsConstructor 
 public class CommentResponse {
     private Long id;
     private String text;
