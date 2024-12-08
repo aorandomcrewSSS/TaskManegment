@@ -45,11 +45,11 @@ public class TaskMapper {
         response.setId(task.getId());
         response.setTitle(task.getTitle());
         response.setDescription(task.getDescription());
-        response.setStatus(task.getStatus().name());  // Преобразуем Enum в строку
-        response.setPriority(task.getPriority().name());  // Преобразуем Enum в строку
+        response.setStatus(task.getStatus().name());
+        response.setPriority(task.getPriority().name());
         response.setAuthorId(task.getAuthor().getId());
         response.setExecutorId(task.getExecutor() != null ? task.getExecutor().getId() : null);
-        // Преобразуем комментарии
+
         List<CommentResponse> commentResponses = task.getComments().stream()
                 .map(comment -> new CommentResponse(
                         comment.getId(),

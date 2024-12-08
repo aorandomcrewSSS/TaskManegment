@@ -44,14 +44,17 @@ public class TaskService {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new EntityNotFoundException("Task not found"));
 
-        // Логика проверки доступа
+        // Логика проверки доступа должна идти до поиска исполнителя
         if (!task.getAuthor().equals(user) && user.getRole() != Role.ADMIN) {
             throw new AccessDeniedException("You do not have permission to update this task");
         }
 
-        // Находим исполнителя, если он указан в обновлении
-        User executor = userRepository.findById(taskUpdateRequest.getExecutorId())
-                .orElseThrow(() -> new EntityNotFoundException("Executor not found"));
+        // Если все проверки прошли, то выполняем поиск исполнителя
+        User executor = null;
+        if (taskUpdateRequest.getExecutorId() != null) {
+            executor = userRepository.findById(taskUpdateRequest.getExecutorId())
+                    .orElseThrow(() -> new EntityNotFoundException("Executor not found"));
+        }
 
         // Маппим обновленные данные из DTO
         task = taskMapper.taskUpdateRequestToTask(taskUpdateRequest, task, executor);
