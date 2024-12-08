@@ -1,15 +1,16 @@
 package com.Intern.TaskManegment.sevice;
 
-import com.Intern.TaskManegment.dto.request.CommentCreateRequest;
-import com.Intern.TaskManegment.dto.response.CommentResponse;
-import com.Intern.TaskManegment.model.Comment;
-import com.Intern.TaskManegment.model.Task;
-import com.Intern.TaskManegment.model.User;
-import com.Intern.TaskManegment.model.enums.Priority;
-import com.Intern.TaskManegment.model.enums.Role;
-import com.Intern.TaskManegment.model.enums.Status;
-import com.Intern.TaskManegment.repository.CommentRepository;
-import com.Intern.TaskManegment.repository.TaskRepository;
+import com.Intern.TaskManagement.dto.request.CommentCreateRequest;
+import com.Intern.TaskManagement.dto.response.CommentResponse;
+import com.Intern.TaskManagement.model.Comment;
+import com.Intern.TaskManagement.model.Task;
+import com.Intern.TaskManagement.model.User;
+import com.Intern.TaskManagement.model.enums.Priority;
+import com.Intern.TaskManagement.model.enums.Role;
+import com.Intern.TaskManagement.model.enums.Status;
+import com.Intern.TaskManagement.repository.CommentRepository;
+import com.Intern.TaskManagement.repository.TaskRepository;
+import com.Intern.TaskManagement.service.CommentService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

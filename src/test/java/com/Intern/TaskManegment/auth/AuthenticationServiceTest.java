@@ -1,9 +1,13 @@
 package com.Intern.TaskManegment.auth;
 
-import com.Intern.TaskManegment.config.JwtService;
-import com.Intern.TaskManegment.model.User;
-import com.Intern.TaskManegment.model.enums.Role;
-import com.Intern.TaskManegment.repository.UserRepository;
+import com.Intern.TaskManagement.auth.AuthenticationRequest;
+import com.Intern.TaskManagement.auth.AuthenticationResponse;
+import com.Intern.TaskManagement.auth.AuthenticationService;
+import com.Intern.TaskManagement.auth.RegisterRequest;
+import com.Intern.TaskManagement.config.JwtService;
+import com.Intern.TaskManagement.model.User;
+import com.Intern.TaskManagement.model.enums.Role;
+import com.Intern.TaskManagement.repository.UserRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
