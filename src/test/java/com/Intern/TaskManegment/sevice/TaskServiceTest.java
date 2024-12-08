@@ -66,13 +66,11 @@ class TaskServiceTest {
 
     @Test
     void createTask_ExecutorNotFound() {
-        // Arrange
         User author = new User(1L, "Author", "author@example.com", "password", Role.USER, List.of());
         TaskCreateRequest request = new TaskCreateRequest("Task Title", "Task Description", "PENDING", "HIGH", 2L);
 
         when(userRepository.findById(2L)).thenReturn(Optional.empty());
 
-        // Act & Assert
         assertThrows(EntityNotFoundException.class, () -> taskService.createTask(request, author));
         verify(userRepository).findById(2L);
         verifyNoInteractions(taskMapper, taskRepository);
@@ -80,14 +78,13 @@ class TaskServiceTest {
 
     @Test
     void updateTask_AccessDenied() {
-        // Arrange
+
         User user = new User(1L, "User", "user@example.com", "password", Role.USER, List.of());
         Task task = new Task(1L, "Task Title", "Task Description", Status.PENDING, Priority.HIGH, new User(2L, "Another Author", "author@example.com", "password", Role.USER, List.of()), null, List.of());
         TaskUpdateRequest request = new TaskUpdateRequest("IN_PROGRESS", "MEDIUM", null);
 
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
 
-        // Act & Assert
         assertThrows(AccessDeniedException.class, () -> taskService.updateTask(1L, request, user));
         verify(taskRepository).findById(1L);
         verifyNoInteractions(userRepository, taskMapper);
@@ -95,16 +92,13 @@ class TaskServiceTest {
 
     @Test
     void deleteTask_Success() throws AccessDeniedException {
-        // Arrange
         User admin = new User(1L, "Admin", "admin@example.com", "password", Role.ADMIN, List.of());
         Task task = new Task(1L, "Task Title", "Task Description", Status.PENDING, Priority.HIGH, admin, null, List.of());
 
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
 
-        // Act
         taskService.deleteTask(1L, admin);
 
-        // Assert
         verify(taskRepository).findById(1L);
         verify(taskRepository).delete(task);
     }

@@ -39,7 +39,7 @@ class CommentServiceTest {
 
     @Test
     void addComment_Success() {
-        // Arrange
+
         User author = new User(1L, "Author", "author@example.com", "password", Role.USER, List.of());
         Task task = new Task(1L, "Task Title", "Task Description", Status.PENDING, Priority.HIGH, author, null, List.of());
         CommentCreateRequest request = new CommentCreateRequest("New comment");
@@ -57,10 +57,10 @@ class CommentServiceTest {
             return savedComment;
         });
 
-        // Act
+
         CommentResponse result = commentService.addComment(1L, author, request);
 
-        // Assert
+
         assertEquals(1L, result.getId());
         assertEquals("New comment", result.getText());
         assertEquals(1L, result.getAuthorId());
@@ -71,14 +71,13 @@ class CommentServiceTest {
 
     @Test
     void deleteComment_AccessDenied() {
-        // Arrange
+
         User author = new User(1L, "Author", "author@example.com", "password", Role.USER, List.of());
         User otherUser = new User(2L, "Other User", "other@example.com", "password", Role.USER, List.of());
         Comment comment = new Comment(1L, null, author, "Comment Text");
 
         when(commentRepository.findById(1L)).thenReturn(Optional.of(comment));
 
-        // Act & Assert
         assertThrows(AccessDeniedException.class, () -> commentService.deleteComment(1L, otherUser));
         verify(commentRepository).findById(1L);
     }

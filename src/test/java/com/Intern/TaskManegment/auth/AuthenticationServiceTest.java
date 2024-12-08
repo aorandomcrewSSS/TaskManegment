@@ -40,7 +40,7 @@ public class AuthenticationServiceTest {
 
     @Test
     public void shouldRegisterUserSuccessfully() {
-        // given
+
         RegisterRequest registerRequest = RegisterRequest.builder()
                 .name("Test User")
                 .email("test@example.com")
@@ -54,24 +54,22 @@ public class AuthenticationServiceTest {
                 .role(Role.USER)
                 .build();
 
-        // Убедитесь, что все используемые объекты соответствуют типу User
+
         when(passwordEncoder.encode(registerRequest.getPassword())).thenReturn("encodedPassword");
         when(userRepository.save(Mockito.any(User.class))).thenReturn(user);  // Мокируем save для User
 
-        // Используем any(UserDetails.class), так как jwtService ожидает объект UserDetails
+
         when(jwtService.generateToken(Mockito.any(org.springframework.security.core.userdetails.UserDetails.class))).thenReturn("mockJwtToken");
 
-        // when
         AuthenticationResponse response = authenticationService.register(registerRequest);
 
-        // then
         Assertions.assertNotNull(response);
         Assertions.assertEquals("mockJwtToken", response.getToken());
     }
 
     @Test
     public void shouldAuthenticateUserSuccessfully() {
-        // given
+
         AuthenticationRequest authRequest = AuthenticationRequest.builder()
                 .email("test@example.com")
                 .password("password123")
@@ -85,17 +83,13 @@ public class AuthenticationServiceTest {
 
         when(userRepository.findByEmail(authRequest.getEmail())).thenReturn(Optional.of(user));
 
-        // Используем any(Authentication.class), так как authenticate ожидает Authentication
         when(authenticationManager.authenticate(Mockito.any(Authentication.class)))
                 .thenReturn(new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities()));
 
-        // Используем any(UserDetails.class), так как jwtService ожидает UserDetails
         when(jwtService.generateToken(Mockito.any(org.springframework.security.core.userdetails.UserDetails.class))).thenReturn("mockJwtToken");
 
-        // when
         AuthenticationResponse response = authenticationService.authenticate(authRequest);
 
-        // then
         Assertions.assertNotNull(response);
         Assertions.assertEquals("mockJwtToken", response.getToken());
     }
