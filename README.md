@@ -34,7 +34,13 @@ Task Management System
 После этого вам будут доступны end-поинты для работы с системой. 
 
 ## Как создать пользователя с правами ADMIN 
-Для создания пользователя с правами доступа USER перейдите в приложение TaskManegment/src/main/java/com/Intern/TaskManegment/auth/AuthenticationService.java 
+
+Для создания пользователя с правами доступа USER перейдите по адресу: 
+
+TaskManegment/src/main/java/com/Intern/TaskManegment/auth/AuthenticationService.java 
+
 В методе AuthenticationResponse register поменяйте поле USER на ADMIN. 
+
 Пересоберите и запустите проект. 
+
 Теперь при регистрации нового пользователя будет создаваться пользователь с правами ADMIN
