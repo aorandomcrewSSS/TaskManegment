@@ -12,8 +12,13 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,13 +35,16 @@ public class TaskController {
     private final TaskService taskService;
     private final UserRepository userRepository;
 
+    @Autowired
+    private PagedResourcesAssembler<TaskResponse> pagedResourcesAssembler;;
+
     @PostMapping
     @ApiOperation(value = "Создать новую задачу", notes = "Создает задачу и назначает ее исполнителю, если указан.")
     @ApiResponses({
             @ApiResponse(code = 201, message = "Задача успешно создана", response = TaskResponse.class),
             @ApiResponse(code = 400, message = "Неверные данные ввода")
     })
-    public ResponseEntity<TaskResponse> createTask(@RequestBody TaskCreateRequest taskCreateRequest) {
+    public ResponseEntity<TaskResponse> createTask(@RequestBody TaskCreateRequest taskCreateRequest) throws AccessDeniedException {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User author = userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("Пользователь не найден"));
@@ -74,16 +82,46 @@ public class TaskController {
         return ResponseEntity.ok(taskResponse);
     }
 
+    @GetMapping("/executor/{executorId}")
+    @ApiOperation(value = "Получить задачи по исполнителю", notes = "Получает все задачи, назначенные конкретному исполнителю.")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "Задачи успешно получены", response = Page.class)
+    })
+    public ResponseEntity<PagedModel<EntityModel<TaskResponse>>> getTasksByExecutor(
+            @PathVariable Long executorId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        // Проверка, существует ли исполнитель с таким ID
+        User executor = userRepository.findById(executorId)
+                .orElseThrow(() -> new EntityNotFoundException("Executor not found"));
+
+        Page<TaskResponse> tasks = taskService.getTasksByExecutor(executorId, pageable);
+
+        // Используем PagedResourcesAssembler для преобразования Page в PagedModel
+        PagedModel<EntityModel<TaskResponse>> pagedModel = pagedResourcesAssembler.toModel(tasks);
+        return ResponseEntity.ok(pagedModel);
+    }
+
     @GetMapping("/my-tasks")
     @ApiOperation(value = "Получить задачи по автору", notes = "Получает все задачи, созданные текущим авторизованным пользователем.")
     @ApiResponse(code = 200, message = "Задачи успешно получены", response = Page.class)
-    public ResponseEntity<Page<TaskResponse>> getMyTasks(Pageable pageable) {
+    public ResponseEntity<PagedModel<EntityModel<TaskResponse>>> getMyTasks(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User author = userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("Пользователь не найден"));
 
         Page<TaskResponse> tasks = taskService.getTasksByAuthor(author.getId(), pageable);
-        return ResponseEntity.ok(tasks);
+
+        // Используем PagedResourcesAssembler для преобразования Page в PagedModel
+        PagedModel<EntityModel<TaskResponse>> pagedModel = pagedResourcesAssembler.toModel(tasks);
+        return ResponseEntity.ok(pagedModel);
     }
 
     @DeleteMapping("/{taskId}")

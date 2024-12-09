@@ -26,11 +26,15 @@ public class TaskService {
     private final TaskMapper taskMapper;
 
     // Создание задачи
-    public TaskResponse createTask(TaskCreateRequest taskCreateRequest, User author) {
+    public TaskResponse createTask(TaskCreateRequest taskCreateRequest, User author) throws AccessDeniedException {
         User executor = null;
         if (taskCreateRequest.getExecutorId() != null) {
             executor = userRepository.findById(taskCreateRequest.getExecutorId())
                     .orElseThrow(() -> new EntityNotFoundException("Executor not found"));
+        }
+
+        if (author.getRole() != Role.ADMIN) {
+            throw new AccessDeniedException("Только администратор может создать задачу");
         }
 
         Task task = taskMapper.taskCreateRequestToTask(taskCreateRequest, author, executor);
@@ -72,15 +76,13 @@ public class TaskService {
         return taskMapper.taskToTaskResponse(task); // Возвращаем TaskResponse
     }
 
-    // Получение всех задач автора с пагинацией
-    public Page<TaskResponse> getTasksByAuthor(Long authorId, Pageable pageable) {
-        Page<Task> tasks = taskRepository.findByAuthorId(authorId, pageable);
+    public Page<TaskResponse> getTasksByExecutor(Long executorId, Pageable pageable) {
+        Page<Task> tasks = taskRepository.findByExecutorId(executorId, pageable);
         return tasks.map(taskMapper::taskToTaskResponse);
     }
 
-    // Получение всех задач исполнителя с пагинацией
-    public Page<TaskResponse> getTasksByExecutor(Long executorId, Pageable pageable) {
-        Page<Task> tasks = taskRepository.findByExecutorId(executorId, pageable);
+    public Page<TaskResponse> getTasksByAuthor(Long authorId, Pageable pageable) {
+        Page<Task> tasks = taskRepository.findByAuthorId(authorId, pageable);
         return tasks.map(taskMapper::taskToTaskResponse);
     }
 
