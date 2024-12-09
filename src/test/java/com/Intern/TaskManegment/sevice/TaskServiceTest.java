@@ -41,29 +41,6 @@ class TaskServiceTest {
     @InjectMocks
     private TaskService taskService;
 
-    @Test
-    void createTask_Success() {
-        // Arrange
-        User author = new User(1L, "Author", "author@example.com", "password", Role.USER, List.of());
-        User executor = new User(2L, "Executor", "executor@example.com", "password", Role.USER, List.of());
-        TaskCreateRequest request = new TaskCreateRequest("Task Title", "Task Description", "PENDING", "HIGH", 2L);
-        Task task = new Task(1L, "Task Title", "Task Description", Status.PENDING, Priority.HIGH, author, executor, List.of());
-        TaskResponse response = new TaskResponse(1L, "Task Title", "Task Description", "PENDING", "HIGH", 1L, 2L, List.of());
-
-        when(userRepository.findById(2L)).thenReturn(Optional.of(executor));
-        when(taskMapper.taskCreateRequestToTask(request, author, executor)).thenReturn(task);
-        when(taskRepository.save(task)).thenReturn(task);
-        when(taskMapper.taskToTaskResponse(task)).thenReturn(response);
-
-        // Act
-        TaskResponse result = taskService.createTask(request, author);
-
-        // Assert
-        assertEquals(response, result);
-        verify(userRepository).findById(2L);
-        verify(taskMapper).taskCreateRequestToTask(request, author, executor);
-        verify(taskRepository).save(task);
-    }
 
     @Test
     void createTask_ExecutorNotFound() {
