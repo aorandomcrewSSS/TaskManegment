@@ -46,18 +46,18 @@ public class TaskService {
     // Обновление задачи
     public TaskResponse updateTask(Long taskId, TaskUpdateRequest taskUpdateRequest, User user) throws AccessDeniedException {
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new EntityNotFoundException("Task not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Задача не найдена"));
 
         // Логика проверки доступа должна идти до поиска исполнителя
         if (!task.getAuthor().equals(user) && user.getRole() != Role.ADMIN) {
-            throw new AccessDeniedException("You do not have permission to update this task");
+            throw new AccessDeniedException("Только администратор может изменить задачу");
         }
 
         // Если все проверки прошли, то выполняем поиск исполнителя
         User executor = null;
         if (taskUpdateRequest.getExecutorId() != null) {
             executor = userRepository.findById(taskUpdateRequest.getExecutorId())
-                    .orElseThrow(() -> new EntityNotFoundException("Executor not found"));
+                    .orElseThrow(() -> new EntityNotFoundException("Исполнитель не найден"));
         }
 
         // Маппим обновленные данные из DTO
@@ -71,7 +71,7 @@ public class TaskService {
     // Получение задачи по ID
     public TaskResponse getTaskById(Long taskId) {
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new EntityNotFoundException("Task not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Задача не найдена"));
 
         return taskMapper.taskToTaskResponse(task); // Возвращаем TaskResponse
     }
@@ -89,11 +89,11 @@ public class TaskService {
     // Удаление задачи
     public void deleteTask(Long taskId, User user) throws AccessDeniedException {
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new EntityNotFoundException("Task not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Задача не найдена"));
 
         // Проверяем, что пользователь может удалять задачу
         if (!task.getAuthor().equals(user) && user.getRole() != Role.ADMIN) {
-            throw new AccessDeniedException("You do not have permission to delete this task");
+            throw new AccessDeniedException("Только администратор может удалить задачу");
         }
 
         taskRepository.delete(task); // Удаляем задачу

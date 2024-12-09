@@ -24,7 +24,7 @@ public class CommentService {
 
     public CommentResponse addComment(Long taskId, User author, CommentCreateRequest commentCreateRequest) {
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new EntityNotFoundException("Task not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Задача не найдена"));
 
         Comment comment = new Comment();
         comment.setTask(task);
@@ -42,10 +42,10 @@ public class CommentService {
 
     public void deleteComment(Long commentId, User author) throws AccessDeniedException {
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new EntityNotFoundException("Comment not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Комментарий не найден"));
 
         if (!comment.getAuthor().equals(author)) {
-            throw new AccessDeniedException("You are not allowed to delete this comment");
+            throw new AccessDeniedException("только автор может удалить комментарий");
         }
 
         commentRepository.delete(comment);
@@ -53,7 +53,7 @@ public class CommentService {
 
     public List<CommentResponse> getCommentsByTask(Long taskId) {
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new EntityNotFoundException("Task not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Задача не найдена"));
 
         return task.getComments().stream()
                 .map(comment -> new CommentResponse(

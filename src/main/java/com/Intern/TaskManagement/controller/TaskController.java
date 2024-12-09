@@ -96,7 +96,7 @@ public class TaskController {
 
         // Проверка, существует ли исполнитель с таким ID
         User executor = userRepository.findById(executorId)
-                .orElseThrow(() -> new EntityNotFoundException("Executor not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Исполнитель не найден"));
 
         Page<TaskResponse> tasks = taskService.getTasksByExecutor(executorId, pageable);
 
@@ -115,7 +115,7 @@ public class TaskController {
         Pageable pageable = PageRequest.of(page, size);
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User author = userRepository.findByEmail(email)
-                .orElseThrow(() -> new EntityNotFoundException("Пользователь не найден"));
+                .orElseThrow(() -> new EntityNotFoundException("Автор не найден"));
 
         Page<TaskResponse> tasks = taskService.getTasksByAuthor(author.getId(), pageable);
 
