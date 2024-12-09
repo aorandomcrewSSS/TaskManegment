@@ -48,7 +48,7 @@ public class TaskMapper {
         response.setStatus(task.getStatus().name());
         response.setPriority(task.getPriority().name());
         response.setAuthorId(task.getAuthor().getId());
-        response.setExecutorId(task.getExecutor() != null ? task.getExecutor().getId() : null);
+        response.setExecutorId(task.getExecutor() != null ? task.getExecutor().getId() : null); // Проверка на null
 
         List<CommentResponse> commentResponses = task.getComments().stream()
                 .map(comment -> new CommentResponse(
