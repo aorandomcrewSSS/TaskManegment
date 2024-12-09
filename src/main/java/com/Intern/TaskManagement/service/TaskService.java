@@ -76,7 +76,6 @@ public class TaskService {
         return taskMapper.taskToTaskResponse(task); // Возвращаем TaskResponse
     }
 
-    // Получение всех задач исполнителя с пагинацией
     public Page<TaskResponse> getTasksByExecutor(Long executorId, Pageable pageable) {
         Page<Task> tasks = taskRepository.findByExecutorId(executorId, pageable);
         return tasks.map(taskMapper::taskToTaskResponse);

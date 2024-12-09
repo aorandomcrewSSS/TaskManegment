@@ -31,15 +31,15 @@ public class Task {
     @Enumerated(EnumType.STRING)
     private Priority priority;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)  // Для связей с пользователем
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)  // Для связей с пользователем
     @JoinColumn(name = "executor_id")
     private User executor;
 
-    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<Comment> comments = new ArrayList<>();
 }
